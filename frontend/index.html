@@ -3,60 +3,148 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DApp Gestion RH</title>
-    <style>
-        body { font-family: Arial, sans-serif; background-color: #f4f4f9; color: #333; margin: 0; padding: 20px; }
-        .container { max-width: 800px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-        h1, h2 { color: #4CAF50; }
-        button { background-color: #4CAF50; color: white; border: none; padding: 10px 15px; cursor: pointer; border-radius: 4px; font-size: 16px; margin-top: 10px; }
-        button:hover { background-color: #45a049; }
-        input { width: calc(100% - 22px); padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 4px; }
-        .section { margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee; display: none; }
-        #status { font-weight: bold; margin-bottom: 20px; }
-        .error { color: red; }
-        .employee-card { border: 1px solid #ddd; padding: 15px; margin-bottom: 10px; border-radius: 5px; background: #fafafa; }
-    </style>
+    <title>BlockRH — Gestion RH Décentralisée</title>
+    <meta name="description" content="BlockRH : Système décentralisé de gestion des ressources humaines sécurisé par la blockchain avec contrôle d'accès basé sur les rôles (RBAC).">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
 <body>
 
-<div class="container">
-    <h1>DApp Gestion des Ressources Humaines</h1>
-    
-    <div id="status">Statut: Non connecté</div>
-    <button id="connectBtn">Connecter MetaMask</button>
-    <div id="accountInfo"></div>
+<!-- Particle Background -->
+<canvas id="particleCanvas"></canvas>
 
-    <!-- Section RH -->
-    <div id="hrSection" class="section">
-        <h2>Espace RH</h2>
-        <p>En tant que RH, vous pouvez ajouter et lister les employés.</p>
-        
-        <h3>Ajouter un employé</h3>
-        <input type="text" id="empWallet" placeholder="Adresse du Wallet (0x...)">
-        <input type="text" id="empName" placeholder="Nom de l'employé">
-        <input type="text" id="empPosition" placeholder="Poste">
-        <input type="number" id="empSalary" placeholder="Salaire (DHS/MAD)">
-        <button id="addEmpBtn">Ajouter Employé</button>
-        <div id="addResult" style="margin-top: 10px;"></div>
+<!-- Toast Container -->
+<div id="toastContainer" class="toast-container"></div>
 
-        <h3>Liste des employés</h3>
-        <button id="listEmpBtn">Afficher tous les employés</button>
-        <div id="employeesList" style="margin-top: 15px;"></div>
+<!-- Loading Overlay -->
+<div id="loadingOverlay" class="loading-overlay">
+    <div class="loading-content">
+        <div class="loading-spinner"></div>
+        <p class="loading-text" id="loadingText">Transaction en cours...</p>
     </div>
+</div>
 
-    <!-- Section Employé -->
-    <div id="employeeSection" class="section">
-        <h2>Espace Employé</h2>
-        <p>Ici vous pouvez consulter vos propres informations personnelles.</p>
-        <button id="myInfoBtn">Afficher mes données</button>
-        <div id="myInfoDisplay" style="margin-top: 15px;"></div>
-    </div>
+<div class="app-wrapper">
 
-    <!-- Section Non Autorisé -->
-    <div id="unauthorizedSection" class="section">
-        <h2>Accès refusé</h2>
-        <p class="error">Seul le RH ou un employé enregistré peuvent accéder aux fonctionnalités.</p>
-    </div>
+    <!-- ── Header ── -->
+    <header class="app-header">
+        <div class="logo-group">
+            <div class="logo-icon"><i class="fas fa-shield-halved"></i></div>
+            <span class="logo-text">BlockRH</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:0.75rem;">
+            <span id="accountInfo" class="account-info">
+                <i class="fas fa-wallet"></i>
+                <span id="accountAddress"></span>
+            </span>
+            <div class="header-badge">
+                <span id="statusDot" class="dot"></span>
+                <span id="statusText">Non connecté</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- ── Main ── -->
+    <main class="app-main">
+        <div class="container">
+
+            <!-- Connect Panel -->
+            <div id="connectPanel" class="connect-panel">
+                <div class="icon-large"><i class="fas fa-link"></i></div>
+                <h2>Bienvenue sur BlockRH</h2>
+                <p>Connectez votre wallet MetaMask pour accéder au système de gestion des ressources humaines sécurisé par la blockchain.</p>
+                <button id="connectBtn" class="btn btn-primary btn-lg">
+                    <i class="fab fa-ethereum"></i>
+                    Connecter MetaMask
+                </button>
+            </div>
+
+            <!-- ═══ HR Section ═══ -->
+            <div id="hrSection" class="section-panel">
+                <div class="panel-header">
+                    <div class="panel-header-icon hr"><i class="fas fa-user-tie"></i></div>
+                    <div>
+                        <div class="panel-title">Espace RH</div>
+                        <div class="panel-subtitle">Gérez vos employés en toute sécurité sur la blockchain</div>
+                    </div>
+                </div>
+
+                <!-- Add Employee -->
+                <div class="glass-card">
+                    <h3><i class="fas fa-user-plus"></i> Ajouter un employé</h3>
+                    <div class="form-group">
+                        <label for="empWallet">Adresse Wallet</label>
+                        <input type="text" id="empWallet" class="form-input" placeholder="0x..." autocomplete="off">
+                    </div>
+                    <div class="form-group">
+                        <label for="empName">Nom complet</label>
+                        <input type="text" id="empName" class="form-input" placeholder="Nom de l'employé">
+                    </div>
+                    <div class="form-group">
+                        <label for="empPosition">Poste</label>
+                        <input type="text" id="empPosition" class="form-input" placeholder="Ex: Développeur, Manager...">
+                    </div>
+                    <div class="form-group">
+                        <label for="empSalary">Salaire (DHS)</label>
+                        <input type="number" id="empSalary" class="form-input" placeholder="Montant en DHS">
+                    </div>
+                    <button id="addEmpBtn" class="btn btn-primary btn-block">
+                        <i class="fas fa-plus-circle"></i>
+                        Ajouter l'employé
+                    </button>
+                </div>
+
+                <!-- Employee List -->
+                <div class="glass-card">
+                    <h3><i class="fas fa-users"></i> Liste des employés</h3>
+                    <button id="listEmpBtn" class="btn btn-secondary btn-block" style="margin-bottom: 1rem;">
+                        <i class="fas fa-rotate"></i>
+                        Charger les employés
+                    </button>
+                    <div id="employeesList"></div>
+                </div>
+            </div>
+
+            <!-- ═══ Employee Section ═══ -->
+            <div id="employeeSection" class="section-panel">
+                <div class="panel-header">
+                    <div class="panel-header-icon emp"><i class="fas fa-user"></i></div>
+                    <div>
+                        <div class="panel-title">Espace Employé</div>
+                        <div class="panel-subtitle">Consultez vos informations personnelles enregistrées sur la blockchain</div>
+                    </div>
+                </div>
+
+                <div class="glass-card">
+                    <h3><i class="fas fa-id-card"></i> Mes informations</h3>
+                    <button id="myInfoBtn" class="btn btn-primary btn-block" style="margin-bottom: 1rem;">
+                        <i class="fas fa-eye"></i>
+                        Afficher mes données
+                    </button>
+                    <div id="myInfoDisplay"></div>
+                </div>
+            </div>
+
+            <!-- ═══ Unauthorized Section ═══ -->
+            <div id="unauthorizedSection" class="section-panel">
+                <div class="denied-panel">
+                    <div class="denied-icon"><i class="fas fa-lock"></i></div>
+                    <h2>Accès Refusé</h2>
+                    <p>Votre wallet n'est pas autorisé. Seul le RH ou un employé enregistré peuvent accéder aux fonctionnalités de cette application.</p>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- ── Footer ── -->
+    <footer class="app-footer">
+        <p class="footer-text">
+            <i class="fas fa-shield-halved" style="color:var(--accent-blue);margin-right:4px;"></i>
+            BlockRH &copy; 2025-2026 — Sécurité IA & Blockchain · FSBM
+        </p>
+    </footer>
+
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.11.1/ethers.umd.min.js"></script>
